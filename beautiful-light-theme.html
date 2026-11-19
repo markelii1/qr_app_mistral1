@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#ffffff" />
+  <meta name="description" content="Векторный генератор штрихкодов и QR-кодов с поддержкой всех стандартных символогий" />
+  
+  <title>Векторный генератор штрихкодов и QR-кодов</title>
+  
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230071e3' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><rect width='5' height='5' x='3' y='3' rx='1'/><rect width='5' height='5' x='16' y='3' rx='1'/><rect width='5' height='5' x='3' y='16' rx='1'/><path d='M21 16h-3a2 2 0 0 0-2 2v3'/><path d='M21 21v.01'/><path d='M12 7v3a2 2 0 0 1-2 2H7'/><path d='M3 12h.01'/><path d='M12 3h.01'/><path d='M12 16v.01'/><path d='M16 12h1'/><path d='M21 12v.01'/><path d='M12 21v-1'/></svg>" />
+  
+  <!-- Preconnect for performance -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  
+  <!-- Load SF Pro fonts (fallback to system fonts) -->
+  <style>
+    /* SF Pro Display - for headings */
+    @font-face {
+      font-family: 'SF Pro Display';
+      font-style: normal;
+      font-weight: 400;
+      font-display: swap;
+      src: local('SF Pro Display Regular'), local('SFProDisplay-Regular'), 
+           url('https://fonts.gstatic.com/s/sfprodisplay/v12/ng6L2Y7jp-455u0yD5bW30Rov19S6T1m_jf26TTM.ttf') format('truetype');
+    }
+    
+    @font-face {
+      font-family: 'SF Pro Display';
+      font-style: normal;
+      font-weight: 600;
+      font-display: swap;
+      src: local('SF Pro Display Semibold'), local('SFProDisplay-Semibold'),
+           url('https://fonts.gstatic.com/s/sfprodisplay/v12/ng6M2Y7jp-455u0yD5bW30Rov19S6T1m_jf26TTM.ttf') format('truetype');
+    }
+    
+    /* SF Pro Text - for body */
+    @font-face {
+      font-family: 'SF Pro Text';
+      font-style: normal;
+      font-weight: 400;
+      font-display: swap;
+      src: local('SF Pro Text Regular'), local('SFProText-Regular'),
+           url('https://fonts.gstatic.com/s/sfprotext/v12/6xKydSBYKcSV-LCoeQqfX1RYOo3qPZZMkidh18S0xR40.ttf') format('truetype');
+    }
+    
+    @font-face {
+      font-family: 'SF Pro Text';
+      font-style: normal;
+      font-weight: 600;
+      font-display: swap;
+      src: local('SF Pro Text Semibold'), local('SFProText-Semibold'),
+           url('https://fonts.gstatic.com/s/sfprotext/v12/6xK3dSBYKcSV-LCoeQqfX1RYOo3qPZZMkidh18S0xR40.ttf') format('truetype');
+    }
+  </style>
+  
+  <!-- Main Theme Stylesheet -->
+  <link rel="stylesheet" href="light-theme.css" />
+  
+  <!-- Inline critical styles for faster loading -->
+  <style>
+    :root {
+      --theme: light;
+      --color-pure-white: #ffffff;
+      --color-silk: #f5f5f7;
+      --color-platinum: #e5e5ea;
+      --color-ash-gray: #86868b;
+      --color-graphite: #424245;
+      --color-charcoal: #1d1d1f;
+      --color-true-black: #000000;
+      --color-apple-blue: #0071e3;
+      --color-link-blue: #2997ff;
+      --font-sf-pro-display: "SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --font-sf-pro-text: "SF Pro Text", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    
+    [data-theme="light"] {
+      --bg-primary: #ffffff;
+      --bg-secondary: #f5f5f7;
+      --text-primary: #1d1d1f;
+      --text-secondary: #424245;
+      --surface-primary: #ffffff;
+      --border-light: rgba(0, 0, 0, 0.08);
+    }
+    
+    [data-theme="dark"] {
+      --bg-primary: #000000;
+      --bg-secondary: #1d1d1f;
+      --text-primary: #f5f5f7;
+      --text-secondary: #cccccc;
+      --surface-primary: #1d1d1f;
+      --border-light: rgba(255, 255, 255, 0.08);
+    }
+    
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background-color: var(--bg-primary);
+      color: var(--text-primary);
+      font-family: var(--font-sf-pro-text);
+      font-size: 15px;
+      line-height: 1.5;
+      letter-spacing: -0.015em;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+    
+    /* Loading state */
+    .loading {
+      opacity: 0.5;
+      pointer-events: none;
+    }
+    
+    /* Theme toggle button inline styles */
+    .theme-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      background: var(--surface-primary);
+      border: 1px solid var(--border-light);
+      border-radius: 9999px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    
+    .theme-toggle:hover {
+      background: var(--bg-secondary);
+    }
+    
+    .theme-toggle-icon {
+      width: 20px;
+      height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .theme-toggle-icon svg {
+      width: 20px;
+      height: 20px;
+    }
+  </style>
+</head>
+
+<body data-theme="light">
+  <!-- Theme Toggle Button (will be positioned in header) -->
+  <button class="theme-toggle no-print" aria-label="Переключить тему" aria-pressed="false" data-theme-toggle>
+    <span class="theme-toggle-icon sun" style="display: none;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="5"/>
+        <line x1="12" y1="1" x2="12" y2="3" stroke-linecap="round"/>
+        <line x1="12" y1="21" x2="12" y2="23" stroke-linecap="round"/>
+        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" stroke-linecap="round"/>
+        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" stroke-linecap="round"/>
+        <line x1="1" y1="12" x2="3" y2="12" stroke-linecap="round"/>
+        <line x1="21" y1="12" x2="23" y2="12" stroke-linecap="round"/>
+        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" stroke-linecap="round"/>
+        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" stroke-linecap="round"/>
+      </svg>
+    </span>
+    <span class="theme-toggle-icon moon" style="display: block;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+      </svg>
+    </span>
+  </button>
+
+  <!-- Main Content Placeholder -->
+  <div id="app-root">
+    <!-- Your existing React app will be mounted here -->
+    <!-- The theme toggle JS will work with the existing app -->
+  </div>
+
+  <!-- Theme Toggle Script -->
+  <script src="theme-toggle.js"></script>
+  
+  <!-- Initialize theme immediately -->
+  <script>
+    (function() {
+      // Apply theme immediately to prevent flash
+      var theme = localStorage.getItem('theme-preference') || 
+                  (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+      document.documentElement.setAttribute('data-theme', theme);
+      
+      // Update toggle button state
+      var toggleBtn = document.querySelector('.theme-toggle');
+      if (toggleBtn) {
+        var sunIcon = toggleBtn.querySelector('.sun');
+        var moonIcon = toggleBtn.querySelector('.moon');
+        if (theme === 'dark') {
+          sunIcon.style.display = 'block';
+          moonIcon.style.display = 'none';
+          toggleBtn.setAttribute('aria-pressed', 'true');
+        } else {
+          sunIcon.style.display = 'none';
+          moonIcon.style.display = 'block';
+          toggleBtn.setAttribute('aria-pressed', 'false');
+        }
+      }
+    })();
+  </script>
+
+  <!-- Load your existing React app -->
+  <script type="module" crossorigin src="barcode_generator_light_theme.js"></script>
+</body>
+</html>
